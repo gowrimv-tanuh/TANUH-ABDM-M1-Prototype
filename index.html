@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SAMVIT — Workflow 1 Prototype</title>
+<style>
+  :root{
+    --teal-900:#1c3f43;
+    --teal-700:#2d6a70;
+    --teal-600:#306f76;
+    --teal-500:#4d8a90;
+    --teal-300:#a9c9cb;
+    --teal-100:#eaf3f3;
+    --ink:#1e3a4c;
+    --grey:#6b7a80;
+    --grey-light:#9aa7ac;
+    --line:#e1e8e9;
+    --paper:#fbfcfc;
+    --success-bg:#d9f1e1;
+    --success-fg:#1f7a44;
+    --warn-bg:#eaf4ff;
+    --warn-fg:#1c5fa8;
+    --danger:#c0392b;
+    --radius:14px;
+    font-family: -apple-system, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: radial-gradient(1200px 700px at 15% -10%, #f0f7f7 0%, #e7eef0 45%, #dfe7e9 100%);
+    color:var(--ink);
+    min-height:100vh;
+    padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#12181a;
+      --ink:#eef4f4;
+      --line:#28363a;
+      --teal-100:#173235;
+    }
+    body{ background: radial-gradient(1200px 700px at 15% -10%, #17262a 0%, #10181a 45%, #0c1213 100%); }
+  }
+
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+    display:grid;
+    grid-template-columns: 340px 1fr;
+    gap:32px;
+    align-items:start;
+  }
+  @media (max-width: 880px){
+    .app{grid-template-columns:1fr; }
+  }
+
+  /* ------- Left rail ------- */
+  .rail{
+    position:sticky;
+    top:20px;
+  }
+  @media (max-width:880px){ .rail{ position:static; } }
+
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.02em;
+    color:var(--teal-600);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  h1{
+    font-size:22px;
+    line-height:1.25;
+    margin:0 0 14px;
+    color:var(--teal-900);
+    font-weight:700;
+  }
+  .prereq{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    margin-bottom:16px;
+  }
+  .prereq h2{
+    font-size:13px;
+    margin:0 0 10px;
+    color:var(--teal-700);
+    font-weight:700;
+  }
+  .prereq ol{
+    margin:0; padding-left:18px;
+    font-size:13px; line-height:1.55; color:var(--grey);
+  }
+  .prereq p{
+    font-size:12.5px; color:var(--grey); line-height:1.55; margin:10px 0 0;
+    border-top:1px solid var(--line); padding-top:10px;
+  }
+
+  .steps{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:8px;
+  }
+  .step-item{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 10px;
+    border-radius:10px;
+    font-size:13px;
+    color:var(--grey);
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .step-item:hover{ background:var(--teal-100); }
+  .step-item.active{ background:var(--teal-600); color:#fff; font-weight:600; }
+  .step-item .dot{
+    width:20px;height:20px;border-radius:50%;
+    background:var(--teal-300); color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10.5px; font-weight:700; flex:none;
+  }
+  .step-item.active .dot{ background:#fff; color:var(--teal-600); }
+  .step-item.done .dot{ background:var(--teal-600); color:#fff; }
+  .step-item.done{ color:var(--teal-700); }
+
+  .reset-btn{
+    margin-top:14px;
+    width:100%;
+    background:none;
+    border:1px solid var(--line);
+    color:var(--grey);
+    font-size:12.5px;
+    padding:9px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .reset-btn:hover{ border-color:var(--teal-500); color:var(--teal-700); }
+
+  /* ------- Phone stage ------- */
+  .stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:6px;
+  }
+  .device{
+    width:360px;
+    max-width:92vw;
+    background:#0c1113;
+    border-radius:46px;
+    padding:14px;
+    box-shadow: 0 30px 60px -20px rgba(15,40,45,.35), 0 2px 8px rgba(0,0,0,.15);
+    position:relative;
+  }
+  .notch{
+    position:absolute;
+    top:14px; left:50%; transform:translateX(-50%);
+    width:120px; height:22px; background:#0c1113;
+    border-radius:0 0 16px 16px;
+    z-index:5;
+  }
+  .screen{
+    background:var(--paper);
+    border-radius:32px;
+    overflow:hidden;
+    height:700px;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{
+    height:34px; flex:none;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 22px;
+    font-size:13px; font-weight:600;
+    background:transparent;
+  }
+  .statusbar .icons{ display:flex; gap:4px; align-items:center; }
+  .statusbar svg{ display:block; }
+
+  .topbar{
+    flex:none;
+    background:var(--teal-600);
+    color:#fff;
+    padding:2px 8px 14px;
+  }
+  .topbar .statusbar{ color:#fff; }
+  .topbar .titlerow{
+    display:flex; align-items:center; gap:10px; padding:4px 10px 0;
+  }
+  .backbtn{
+    width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.14);
+    cursor:pointer; flex:none; border:none;
+  }
+  .backbtn:hover{ background:rgba(255,255,255,.24); }
+  .titlerow h3{ margin:0; font-size:16.5px; font-weight:700; }
+
+  .body{
+    flex:1;
+    overflow-y:auto;
+    padding:18px 18px 22px;
+  }
+  .body::-webkit-scrollbar{width:0;}
+
+  .screen-flat .body{ padding-top:26px; }
+
+  /* ---- shared components ---- */
+  .option-card{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:14px;
+    cursor:pointer;
+    transition: box-shadow .15s ease, border-color .15s ease, transform .1s ease;
+  }
+  .option-card:hover{ border-color:var(--teal-500); box-shadow:0 6px 18px -10px rgba(48,111,118,.4); }
+  .option-card:active{ transform: scale(.99); }
+  .icon-badge{
+    width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex:none; font-size:19px;
+  }
+  .icon-badge.blue{ background:#dbe9fb; }
+  .icon-badge.green{ background:#dcf3e4; }
+  .icon-badge.amber{ background:#fbe9d6; }
+  .option-card .txt{ flex:1; }
+  .option-card .txt .row{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .option-card .txt strong{ font-size:14.5px; color:var(--ink); }
+  .option-card .txt p{ margin:4px 0 0; font-size:12.5px; color:var(--grey); line-height:1.45; }
+  .info-dot{ color:var(--teal-500); font-size:15px; flex:none; }
+
+  h4.q{ font-size:17px; margin:2px 0 18px; color:var(--ink); font-weight:700; line-height:1.35; }
+
+  label.field-label{ display:block; font-size:13px; font-weight:600; color:var(--ink); margin:0 0 8px; }
+  input.field{
+    width:100%; border:1px solid var(--line); border-radius:11px;
+    padding:12px 14px; font-size:14.5px; color:var(--ink);
+    background:var(--paper);
+  }
+  input.field:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(48,111,118,.12); }
+  input.field.disabled, input.field:disabled{ background:var(--teal-100); color:var(--grey); }
+  .field-wrap{ position:relative; margin-bottom:18px;}
+  .field-wrap .emoji-suffix{ position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:16px; }
+
+  .steps-progress{
+    display:flex; align-items:center; justify-content:center;
+    gap:6px; margin:6px 0 22px;
+  }
+  .sp-item{ display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .sp-circle{
+    width:26px;height:26px;border-radius:50%;
+    background:var(--teal-100); color:var(--grey-light);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; border:1px solid var(--line);
+  }
+  .sp-circle.active{ background:var(--teal-600); color:#fff; border-color:var(--teal-600); }
+  .sp-circle.done{ background:var(--teal-600); color:#fff; border-color:var(--teal-600); }
+  .sp-label{ font-size:10px; color:var(--grey-light); font-weight:600; }
+  .sp-label.active{ color:var(--teal-700); }
+  .sp-line{ width:34px; height:1px; background:var(--line); margin-bottom:17px; }
+
+  fieldset.consent{ border:none; margin:6px 0 4px; padding:0; }
+  legend{ font-size:13.5px; font-weight:700; color:var(--ink); margin-bottom:10px; padding:0; }
+  .chk-row{ display:flex; gap:10px; align-items:flex-start; margin-bottom:14px; }
+  .chk-row input[type=checkbox]{
+    width:18px;height:18px; accent-color:var(--teal-600); margin-top:1px; flex:none; cursor:pointer;
+  }
+  .chk-row label{ font-size:13px; line-height:1.5; color:var(--ink); }
+  .chk-row a{ color:var(--teal-600); font-weight:600; text-decoration:none; }
+  .chk-row a:hover{ text-decoration:underline; }
+
+  .btn{
+    width:100%; border:none; border-radius:12px;
+    padding:14px; font-size:14.5px; font-weight:700;
+    cursor:pointer; text-align:center;
+    background:var(--teal-600); color:#fff;
+    transition:opacity .15s ease, transform .1s ease;
+  }
+  .btn:active{ transform:scale(.985); }
+  .btn:disabled{ background:var(--teal-300); cursor:not-allowed; opacity:.75; }
+  .btn.outline{ background:transparent; border:1.5px solid var(--teal-600); color:var(--teal-700); }
+  .btn.ghost{ background:transparent; border:1px solid var(--line); color:var(--ink); }
+  .btn-row{ display:flex; gap:10px; }
+  .btn-row .btn{ flex:1; }
+
+  .otp-icon{
+    width:72px;height:72px;border-radius:50%;
+    background:var(--teal-100);
+    display:flex;align-items:center;justify-content:center;
+    margin:6px auto 20px; font-size:28px;
+  }
+  .otp-copy{ text-align:center; font-size:14px; color:var(--ink); line-height:1.5; margin-bottom:22px; }
+  .otp-boxes{ display:flex; gap:8px; justify-content:center; margin-bottom:16px; }
+  .otp-boxes input{
+    width:38px; height:46px; text-align:center; font-size:19px; font-weight:700;
+    border:1px solid var(--line); border-radius:10px; color:var(--ink);
+  }
+  .otp-boxes input:focus{ outline:none; border-color:var(--teal-500); box-shadow:0 0 0 3px rgba(48,111,118,.12); }
+  .otp-meta{ text-align:center; font-size:12.5px; color:var(--grey); margin-bottom:26px; }
+  .otp-meta a{ color:var(--teal-600); font-weight:700; text-decoration:none; }
+  .otp-meta .resend-dim{ color:var(--grey-light); pointer-events:none; }
+  .otp-meta div{ margin-top:4px; }
+
+  .info-box{
+    background:var(--warn-bg); border-radius:12px; padding:14px 14px 14px 14px;
+    margin:2px 0 24px; font-size:12.5px; color:#274a63; line-height:1.6;
+  }
+  .info-box .head{ display:flex; align-items:center; gap:7px; font-weight:700; color:#1c5fa8; margin-bottom:8px; font-size:13px;}
+  .info-box ul{ margin:0; padding-left:16px; }
+
+  .readonly-row{ margin-bottom:14px; }
+  .readonly-row .lbl{ font-size:12.5px; color:var(--grey); margin-bottom:6px; display:flex; justify-content:space-between; }
+  .readonly-row .val{
+    border:1px solid var(--line); border-radius:10px; padding:11px 13px;
+    font-size:14px; color:var(--ink); background:var(--teal-100);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .readonly-row .val.editable{ background:var(--paper); }
+  .readonly-row .val input{ border:none; background:transparent; font-size:14px; color:var(--ink); width:100%; padding:0; }
+  .readonly-row .val input:focus{ outline:none; }
+  .pencil{ cursor:pointer; color:var(--teal-600); }
+
+  .note-box{
+    background:var(--teal-100); border-radius:12px; padding:12px 14px;
+    font-size:12px; color:var(--teal-700); line-height:1.55; margin:6px 0 20px;
+    display:flex; gap:8px;
+  }
+
+  /* success */
+  .center-col{ display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:16px; }
+  .check-circle{
+    width:78px;height:78px;border-radius:50%;
+    background:var(--success-bg);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:18px;
+  }
+  .check-circle .inner{
+    width:52px;height:52px;border-radius:50%;
+    background:var(--success-fg);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff; font-size:26px; font-weight:700;
+  }
+  .center-col h4{ font-size:18px; color:var(--ink); margin:0 0 22px; line-height:1.4; }
+  .id-row{
+    width:100%; display:flex; justify-content:space-between; align-items:center;
+    padding:12px 4px; border-bottom:1px solid var(--line); text-align:left;
+  }
+  .id-row:last-of-type{ border-bottom:none; margin-bottom:22px; }
+  .id-row .lbl{ font-size:11.5px; color:var(--grey); margin-bottom:3px; }
+  .id-row .val{ font-size:14.5px; font-weight:700; color:var(--ink); }
+  .copy-btn{
+    border:none; background:none; cursor:pointer; color:var(--teal-600);
+    font-size:16px; padding:4px;
+  }
+  .actions-stack{ width:100%; display:flex; flex-direction:column; gap:10px; }
+
+  /* card screen */
+  .abha-card{
+    border:1px solid var(--line); border-radius:16px; padding:20px;
+    background:var(--paper);
+  }
+  .abha-card .brand{ display:flex; gap:10px; align-items:center; margin-bottom:20px; }
+  .abha-card .brand .mark{ font-size:26px; }
+  .abha-card .brand .name{ font-size:11px; color:var(--grey); line-height:1.4; }
+  .abha-card .name-lg{ font-size:17px; font-weight:700; color:var(--teal-800, var(--teal-700)); text-align:center; margin-bottom:14px; }
+  .abha-card .kv{ text-align:center; margin-bottom:10px; }
+  .abha-card .kv .lbl{ font-size:11px; color:var(--grey); }
+  .abha-card .kv .val{ font-size:14.5px; font-weight:700; color:var(--ink); }
+  .qr-wrap{ display:flex; justify-content:center; margin:18px 0 12px; }
+  .qr-cap{ text-align:center; font-size:12px; color:var(--grey); margin-bottom:6px; }
+
+  /* profile */
+  .profile-head{ display:flex; gap:14px; align-items:center; margin-bottom:18px; }
+  .avatar{
+    width:52px;height:52px;border-radius:50%;
+    background:#dbe9fb; display:flex;align-items:center;justify-content:center;
+    font-size:22px; flex:none;
+  }
+  .profile-head h4{ margin:0 0 3px; font-size:15.5px; color:var(--ink); }
+  .profile-head .sub{ font-size:12px; color:var(--grey); margin-bottom:6px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:5px;
+    background:var(--success-bg); color:var(--success-fg);
+    font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px;
+  }
+  .tabs{ display:flex; border-bottom:1px solid var(--line); margin-bottom:18px; }
+  .tab{
+    flex:1; text-align:center; padding:10px 4px; font-size:13px; font-weight:700;
+    color:var(--grey); cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tab.active{ color:var(--teal-700); border-color:var(--teal-600); }
+  .kv-row{ display:flex; justify-content:space-between; padding:11px 0; border-bottom:1px solid var(--line); }
+  .kv-row .lbl{ font-size:12.5px; color:var(--grey); }
+  .kv-row .val{ font-size:13.5px; color:var(--ink); font-weight:600; text-align:right; max-width:60%; }
+
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .chip{
+    border:1px solid var(--line); border-radius:20px; padding:8px 14px;
+    font-size:12.5px; font-weight:600; color:var(--grey); cursor:pointer;
+    background:var(--paper); transition:background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .chip:hover{ border-color:var(--teal-500); }
+  .chip.active{ background:var(--teal-600); border-color:var(--teal-600); color:#fff; }
+
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .stat-card{
+    border:1px solid var(--line); border-radius:14px; padding:14px;
+    background:var(--paper);
+  }
+  .stat-icon{ font-size:18px; margin-bottom:8px; }
+  .stat-value{ font-size:22px; font-weight:700; color:var(--teal-800, var(--ink)); line-height:1; }
+  .stat-label{ font-size:11px; color:var(--grey); margin-top:6px; line-height:1.3; }
+
+  .bottomnav{
+    flex:none; display:flex; border-top:1px solid var(--line);
+    padding:10px 0 14px; background:var(--paper);
+  }
+  .bottomnav .nav-item{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:10.5px; color:var(--grey-light); cursor:pointer;
+  }
+  .bottomnav .nav-item.active{ color:var(--teal-600); font-weight:700; }
+
+  .toast{
+    position:absolute; left:50%; bottom:26px; transform:translateX(-50%) translateY(8px);
+    background:var(--ink); color:#fff; padding:10px 18px; border-radius:30px;
+    font-size:12.5px; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+    white-space:nowrap; z-index:20; box-shadow:0 10px 22px rgba(0,0,0,.25);
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .hint-banner{
+    max-width:360px; margin:18px auto 0; text-align:center;
+    font-size:12px; color:var(--grey); line-height:1.6;
+  }
+  .hint-banner b{ color:var(--teal-700); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LEFT RAIL -->
+  <aside class="rail">
+    <div class="eyebrow">SAMVIT · TANUH</div>
+    <h1>Workflow 1 — New patient registration, creating ABHA number/address</h1>
+
+    <div class="prereq">
+      <h2>Pre-requisites</h2>
+      <ol>
+        <li>Patient has no ABHA number/address</li>
+        <li>Patient has Aadhaar-linked mobile</li>
+        <li>Both FLW and patient mobile are online</li>
+        <li>FLW is mapped to a facility registered as an ABDM identifier</li>
+      </ol>
+      <p>FLW explains the benefits of ABHA; patient agrees to ABHA creation and registration to TANUH. Confirm the patient has no existing ABHA first — some patients get one during a health camp without realising it.</p>
+    </div>
+
+    <div class="steps" id="stepList"></div>
+
+    <button class="reset-btn" id="resetBtn">↺ Restart prototype</button>
+  </aside>
+
+  <!-- PHONE STAGE -->
+  <div class="stage">
+    <div class="device">
+      <div class="notch"></div>
+      <div class="screen" id="screenRoot"></div>
+    </div>
+    <div class="hint-banner">Tap the highlighted actions to move through the flow — <b>this is a working prototype</b>, not a real ABDM connection.</div>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- state & flow ---------------- */
+const state = {
+  aadhaar: "",
+  consents: [false,false,false,false],
+  otp: ["","","","","",""],
+  abhaAddress: "",
+  address: "#12, 1st Main Road,\nHSR Layout, Bangalore - 560102",
+  editingAddress: false,
+  profileTab: "demo",
+  regMethod: "create",     // 'create' | 'link' | 'none'
+  linkSearchType: "abhaAddress",  // 'abhaAddress' | 'abhaNumber' | 'mobile' | 'aadhaar'
+  linkSearchValue: "",
+  linkAadhaarConsents: [false,false],
+  linkOtp: ["","","","","",""],
+  linkNotSure: false,
+  noAbhaForm: { name:"", dob:"", gender:"", mobile:"", address:"" },
+  patientSearchValue: "",
+  existingAadhaar: "",
+  existingConsents: [false,false],
+  existingOtp: ["","","","","",""],
+  history: []
+};
+
+function activePatient(){
+  if(state.regMethod === "linkExisting"){
+    return {
+      name: "Sunita Devi",
+      tanuhId: "TNU-000876",
+      abhaNumber: "34-5678-9012-3456",
+      abhaAddress: "sunita.devi@abdm",
+      dob: "05 Jul 1990",
+      dobAge: "05 Jul 1990 (35 years)",
+      gender: "Female",
+      mobile: "9123456780",
+      address: "#48, 2nd Cross, Ashok Nagar,\nMysuru - 570009",
+    };
+  }
+  return {
+    name: "Ramesh Kumar",
+    tanuhId: "TNU-001245",
+    abhaNumber: "23-4567-8901-2345",
+    abhaAddress: "ramesh.kumar@abdm",
+    dob: "12 Mar 1984",
+    dobAge: "12 Mar 1984 (41 years)",
+    gender: "Male",
+    mobile: "9876543210",
+    address: "#12, 1st Main Road,\nHSR Layout, Bangalore - 560102",
+  };
+}
+
+const STEP_DEFS = [
+  { id:"register", label:"Register Patient" },
+  { id:"createAbha", label:"Create ABHA Number" },
+  { id:"otp", label:"Verify Aadhaar OTP" },
+  { id:"review", label:"Review Patient Details" },
+  { id:"address", label:"Create ABHA Address" },
+  { id:"success", label:"Registration Success" },
+  { id:"card", label:"ABHA Card" },
+  { id:"profile", label:"Patient Profile" },
+];
+
+let current = "dashboard";
+
+function go(screenId, opts={}){
+  if(!opts.replace) state.history.push(current);
+  current = screenId;
+  render();
+}
+function back(){
+  const prev = state.history.pop();
+  current = prev || "dashboard";
+  render();
+}
+function resetAll(){
+  state.aadhaar=""; state.consents=[false,false,false,false];
+  state.otp=["","","","","",""]; state.abhaAddress="";
+  state.editingAddress=false; state.profileTab="demo"; state.history=[];
+  state.regMethod="create"; state.linkSearchType="abhaAddress"; state.linkSearchValue="";
+  state.linkAadhaarConsents=[false,false]; state.linkOtp=["","","","","",""];
+  state.linkNotSure=false; state.noAbhaForm={ name:"", dob:"", gender:"", mobile:"", address:"" };
+  state.patientSearchValue=""; state.existingAadhaar=""; state.existingConsents=[false,false];
+  state.existingOtp=["","","","","",""];
+  current="registerHome"; render();
+}
+document.getElementById("resetBtn").addEventListener("click", resetAll);
+
+function toast(msg){
+  const t = document.getElementById("toastEl");
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove("show"), 1800);
+}
+function copyText(txt, label){
+  navigator.clipboard?.writeText(txt).catch(()=>{});
+  toast((label||"Copied") + " ✓");
+}
+
+/* ---------------- step rail render ---------------- */
+function renderStepList(){
+  const map = { register:0, createAbha:1, otp:2, review:3, address:4, success:5, screening:5, card:6, profile:7,
+    linkSearch:0, linkVerify:0, linkOtp:0, linkResult:0, linkReview:0, ambiguity:0, noAbhaForm:0,
+    patientRecord:0, existingAadhaar:0, existingOtp:0, existingFetch:0, dashboard:0, registerHome:0 };
+  const idx = map[current] ?? 0;
+  const el = document.getElementById("stepList");
+  el.innerHTML = STEP_DEFS.map((s,i)=>{
+    const cls = i===idx ? "active" : (i<idx ? "done":"");
+    const mark = i<idx ? "✓" : (i+1);
+    return `<div class="step-item ${cls}" data-goto="${s.id}">
+      <span class="dot">${mark}</span><span>${s.label}</span>
+    </div>`;
+  }).join("");
+  el.querySelectorAll(".step-item").forEach(node=>{
+    node.addEventListener("click", ()=> go(node.dataset.goto));
+  });
+}
+
+/* ---------------- status bar / chrome ---------------- */
+function statusBarIcons(color){
+  return `<div class="icons">
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><path d="M1 9L1 9.5C1 9.5 3 6 4.5 9.5M5.5 7L5.5 9.5C5.5 9.5 7.5 4 9 9.5M10 5L10 9.5C10 9.5 12 1.5 13.5 9.5" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/></svg>
+    <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><path d="M7.5 1C10.5 1 13 2.6 14.5 4.4L7.5 11L0.5 4.4C2 2.6 4.5 1 7.5 1Z" fill="${color}"/></svg>
+    <svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x="1" y="1" width="19" height="10" rx="2.5" stroke="${color}" stroke-width="1"/><rect x="2.5" y="2.5" width="16" height="7" rx="1.2" fill="${color}"/><rect x="21" y="4" width="2" height="4" rx="1" fill="${color}"/></svg>
+  </div>`;
+}
+function statusBar(dark){
+  const c = dark ? "#fff" : "var(--ink)";
+  return `<div class="statusbar" style="color:${c}"><span>9:41</span>${statusBarIcons(c)}</div>`;
+}
+function topBar(title, opts={}){
+  return `<div class="topbar">
+    ${statusBar(true)}
+    <div class="titlerow">
+      <button class="backbtn" onclick="${opts.noBack? '' : 'back()'}" ${opts.noBack?'style="visibility:hidden"':''}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 13L5 8L10 3" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h3>${title}</h3>
+    </div>
+  </div>`;
+}
+function bottomNav(active){
+  const items = [
+    {id:"home", label:"Home", icon:"🏠", action:"go('dashboard')"},
+    {id:"register", label:"Register", icon:"🧾", action:"go('registerHome')"},
+    {id:"more", label:"More", icon:"☰", action:"toast('Not part of this prototype')"},
+  ];
+  return `<div class="bottomnav">${items.map(it=>`
+    <div class="nav-item ${it.id===active?'active':''}" onclick="${it.action}">
+      <span>${it.icon}</span><span>${it.label}</span>
+    </div>`).join("")}</div>`;
+}
+function stepsProgress(labels, activeIdx){
+  return `<div class="steps-progress">${labels.map((l,i)=>{
+    const cls = i<activeIdx ? "done" : (i===activeIdx ? "active" : "");
+    const inner = i<activeIdx ? "✓" : (i+1);
+    const line = i>0 ? `<div class="sp-line"></div>` : "";
+    return `${line}<div class="sp-item"><div class="sp-circle ${cls}">${inner}</div><div class="sp-label ${i===activeIdx?'active':''}">${l}</div></div>`;
+  }).join("")}</div>`;
+}
+
+/* ---------------- screens ---------------- */
+function screenDashboard(){
+  const stats = [
+    { icon:"🧾", value:"8",  label:"Registered Today" },
+    { icon:"🪪", value:"5",  label:"ABHA Created/Linked" },
+    { icon:"🩺", value:"3",  label:"Screenings Pending" },
+    { icon:"📅", value:"2",  label:"Follow-ups Due" },
+  ];
+  const activity = [
+    { name:"Sunita Devi", note:"ABHA linked to existing record", time:"10 min ago" },
+    { name:"Ramesh Kumar", note:"New ABHA number created", time:"1 hr ago" },
+    { name:"Lakshmi Bai", note:"Registered without ABHA", time:"2 hrs ago" },
+  ];
+  return `
+  ${topBar("Home", {noBack:true})}
+  <div class="body">
+    <h4 class="q">Good morning 👋<br><span style="font-size:13px;font-weight:600;color:var(--grey);">Here's today's overview</span></h4>
+
+    <div class="stat-grid">
+      ${stats.map(s=>`
+        <div class="stat-card">
+          <div class="stat-icon">${s.icon}</div>
+          <div class="stat-value">${s.value}</div>
+          <div class="stat-label">${s.label}</div>
+        </div>`).join("")}
+    </div>
+
+    <label class="field-label" style="margin:24px 0 10px;">Recent Activity</label>
+    ${activity.map(a=>`
+      <div class="id-row" style="padding:10px 2px;">
+        <div>
+          <div style="font-size:13.5px;font-weight:700;color:var(--ink);">${a.name}</div>
+          <div style="font-size:11.5px;color:var(--grey);margin-top:2px;">${a.note}</div>
+        </div>
+        <div style="font-size:11px;color:var(--grey-light);white-space:nowrap;">${a.time}</div>
+      </div>`).join("")}
+  </div>
+  ${bottomNav("home")}
+  `;
+}
+
+function screenRegisterHome(){
+  const valid = state.patientSearchValue.trim().length >= 2;
+  return `
+  ${topBar("Register", {noBack:true})}
+  <div class="body">
+    <label class="field-label" style="margin-bottom:12px;">Find a patient</label>
+    <div class="field-wrap">
+      <input class="field" id="patientSearchInput" placeholder="Search by patient name" value="${state.patientSearchValue}">
+    </div>
+    <button class="btn" id="patientSearchBtn" ${valid?"":"disabled"}>🔍 Search Patients</button>
+
+    <div style="height:1px;background:var(--line);margin:26px 0 22px;"></div>
+
+    <label class="field-label" style="margin-bottom:12px;">Start a new registration</label>
+    <div class="option-card" onclick="go('register')">
+      <div class="icon-badge blue">🧾</div>
+      <div class="txt">
+        <div class="row"><strong>Register Patient</strong><span class="info-dot">ⓘ</span></div>
+        <p>Create a new ABHA number, link an existing one, or register without ABHA.</p>
+      </div>
+    </div>
+  </div>
+  ${bottomNav("register")}
+  `;
+}
+
+function screenRegister(){
+  return `
+  ${topBar("Register Patient")}
+  <div class="body">
+    <h4 class="q">How would you like to register the patient?</h4>
+
+    <div class="option-card" onclick="state.regMethod='create'; go('createAbha')">
+      <div class="icon-badge blue">🪪</div>
+      <div class="txt">
+        <div class="row"><strong>Register by creating ABHA number</strong><span class="info-dot">ⓘ</span></div>
+        <p>Create a new ABHA number for the patient and register them to TANUH.</p>
+      </div>
+    </div>
+
+    <div class="option-card" onclick="state.regMethod='link'; go('linkSearch')">
+      <div class="icon-badge green">🔗</div>
+      <div class="txt">
+        <div class="row"><strong>Register by linking ABHA number/address</strong><span class="info-dot">ⓘ</span></div>
+        <p>Use the patient's existing ABHA number or address and link to TANUH.</p>
+      </div>
+    </div>
+
+    <div class="option-card" onclick="state.regMethod='none'; go('noAbhaForm')">
+      <div class="icon-badge amber">👤</div>
+      <div class="txt">
+        <div class="row"><strong>Register without ABHA</strong><span class="info-dot">ⓘ</span></div>
+        <p>Register the patient without ABHA. You can link ABHA later when available.</p>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function screenCreateAbha(){
+  const aadhaarOk = state.aadhaar.replace(/\D/g,"").length === 12;
+  const allConsent = state.consents.every(Boolean);
+  const canContinue = aadhaarOk && allConsent;
+  return `
+  ${topBar("Create ABHA Number")}
+  <div class="body">
+    ${stepsProgress(["Aadhaar","Consent","OTP"], 0)}
+
+    <label class="field-label">Enter Aadhaar Number</label>
+    <div class="field-wrap">
+      <input class="field" id="aadhaarInput" maxlength="14" inputmode="numeric" placeholder="Enter 12 digit Aadhaar number" value="${state.aadhaar}">
+      <span class="emoji-suffix">🪪</span>
+    </div>
+
+    <fieldset class="consent">
+      <legend>Consent and Terms</legend>
+      ${[
+        "I provide consent for using my Aadhaar details for ABHA creation",
+        "I provide consent for creating ABHA number and ABHA address",
+        "I provide consent for sharing data with TANUH for healthcare services",
+        "I agree to the Terms and Conditions"
+      ].map((t,i)=>`
+        <div class="chk-row">
+          <input type="checkbox" id="c${i}" ${state.consents[i]?"checked":""}>
+          <label for="c${i}">${t} <a href="javascript:void(0)" onclick="event.preventDefault(); toast('Full terms text goes here')">(Read more)</a></label>
+        </div>`).join("")}
+    </fieldset>
+
+    <button class="btn" id="continueBtn" ${canContinue? "" : "disabled"}>Continue</button>
+  </div>
+  `;
+}
+
+function screenOtp(){
+  const filled = state.otp.filter(d=>d!=="").length;
+  const canVerify = filled === 6;
+  return `
+  ${topBar("Verify Aadhaar (OTP)")}
+  <div class="body">
+    ${stepsProgress(["Aadhaar","OTP","ABHA Address"], 1)}
+    <div class="otp-icon">💬</div>
+    <div class="otp-copy">Enter the 6-digit OTP sent to<br>the mobile number linked to<br>this Aadhaar number.</div>
+    <div class="otp-boxes">
+      ${state.otp.map((d,i)=>`<input maxlength="1" inputmode="numeric" data-idx="${i}" value="${d}">`).join("")}
+    </div>
+    <div class="otp-meta">
+      <a href="javascript:void(0)" id="resendLink">Resend OTP (<span id="resendTimer">60</span>s)</a>
+      <div>Resend allowed for 2 attempts</div>
+    </div>
+    <button class="btn" id="verifyBtn" ${canVerify? "" : "disabled"}>Verify OTP</button>
+  </div>
+  `;
+}
+
+function screenAddress(){
+  const v = state.abhaAddress.trim();
+  const valid = /^[a-z0-9._]{3,32}$/.test(v);
+  return `
+  ${topBar("Create ABHA Address")}
+  <div class="body">
+    ${stepsProgress(["Aadhaar","OTP","ABHA Address"], 2)}
+    <label class="field-label">Enter ABHA Address</label>
+    <div class="field-wrap">
+      <input class="field" id="addressInput" placeholder="e.g. name@abdm" value="${state.abhaAddress}">
+    </div>
+    <div class="info-box">
+      <div class="head">ⓘ Rules for ABHA Address</div>
+      <ul>
+        <li>Must be unique</li>
+        <li>3–32 characters</li>
+        <li>Can contain lowercase letters (a–z), numbers (0–9), dot (.) and underscore (_)</li>
+        <li>No spaces or special characters other than dot (.) and underscore (_)</li>
+        <li>e.g. ramesh.kumar@abdm</li>
+        <li>Once created, it cannot be changed often</li>
+      </ul>
+    </div>
+    <button class="btn" id="addrContinueBtn" ${valid? "" : "disabled"}>Confirm &amp; Register</button>
+  </div>
+  `;
+}
+
+function screenReview(){
+  return `
+  ${topBar("Review Patient Details")}
+  <div class="body">
+    <p style="font-size:12.5px;color:var(--grey);margin:0 0 18px;">Verify the details fetched from Aadhaar</p>
+
+    <div class="readonly-row"><div class="lbl">Full Name</div><div class="val">Ramesh Kumar</div></div>
+    <div class="readonly-row"><div class="lbl">Date of Birth</div><div class="val">12 Mar 1984 <span>📅</span></div></div>
+    <div class="readonly-row"><div class="lbl">Age</div><div class="val">41 years</div></div>
+    <div class="readonly-row"><div class="lbl">Gender</div><div class="val">Male</div></div>
+    <div class="readonly-row">
+      <div class="lbl" style="display:flex;justify-content:space-between;">
+        <span>Address</span>
+        <span class="pencil" onclick="state.editingAddress=!state.editingAddress; render();">✏️</span>
+      </div>
+      <div class="val editable" style="white-space:pre-line; align-items:flex-start;">
+        ${state.editingAddress
+          ? `<textarea id="addressEdit" rows="2" style="width:100%;border:none;font-size:14px;color:var(--ink);font-family:inherit;resize:none;">${state.address}</textarea>`
+          : state.address}
+      </div>
+    </div>
+
+    <div class="note-box">ⓘ These details are fetched from Aadhaar and cannot be edited (except address).</div>
+
+    <div class="btn-row">
+      <button class="btn ghost" onclick="back()">Back</button>
+      <button class="btn" onclick="go('address')">Confirm &amp; Continue</button>
+    </div>
+  </div>
+  `;
+}
+
+function screenSuccess(){
+  const method = state.regMethod;
+  const p = activePatient();
+  const headline = method === "create"
+    ? "ABHA Number Created<br>&amp; Patient Registered<br>Successfully!"
+    : method === "link"
+    ? "ABHA Linked<br>&amp; Patient Registered<br>Successfully!"
+    : method === "linkExisting"
+    ? "ABHA Number Created<br>&amp; Linked to Patient<br>Successfully!"
+    : "Patient Registered<br>Successfully!";
+
+  const abhaRows = method === "none" ? `
+      <div class="note-box" style="width:100%; text-align:left; margin-bottom:6px;">ⓘ No ABHA linked yet. You can link or create one anytime from the patient's profile.</div>
+  ` : `
+      <div class="id-row">
+        <div><div class="lbl">ABHA Number</div><div class="val">${p.abhaNumber}</div></div>
+        <button class="copy-btn" onclick="copyText('${p.abhaNumber}','ABHA Number')">⧉</button>
+      </div>
+      <div class="id-row">
+        <div><div class="lbl">ABHA Address</div><div class="val">${p.abhaAddress}</div></div>
+        <button class="copy-btn" onclick="copyText('${p.abhaAddress}','ABHA Address')">⧉</button>
+      </div>
+  `;
+
+  const lastAction = method === "linkExisting"
+    ? `<button class="btn ghost" onclick="resetAll()">🔍 Search Another Patient</button>`
+    : `<button class="btn ghost" onclick="resetAll()">Register Another Patient</button>`;
+
+  return `
+  <div class="body screen-flat-body">
+    ${statusBar(false)}
+    <div class="center-col">
+      <div class="check-circle"><div class="inner">✓</div></div>
+      <h4>${headline}</h4>
+
+      ${abhaRows}
+      <div class="id-row">
+        <div><div class="lbl">TANUH Patient ID</div><div class="val">${p.tanuhId}</div></div>
+        <button class="copy-btn" onclick="copyText('${p.tanuhId}','TANUH Patient ID')">⧉</button>
+      </div>
+
+      <div class="actions-stack">
+        <button class="btn" onclick="go('screening')">🩺 Perform Screening</button>
+        ${method !== "none" ? `<button class="btn outline" onclick="go('card')">View ABHA Card</button>` : ""}
+        <button class="btn outline" onclick="go('profile')">Go to Patient Profile</button>
+        ${lastAction}
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function screenScreening(){
+  const opts = [
+    { id:"cbac", icon:"📋", cls:"blue", title:"CBAC Risk Assessment", desc:"Community-Based Assessment Checklist to flag risk of diabetes, hypertension &amp; common cancers." },
+    { id:"vitals", icon:"🩺", cls:"green", title:"Blood Pressure &amp; Blood Glucose", desc:"Record BP and random/fasting blood glucose readings for NCD screening." },
+    { id:"oral", icon:"🦷", cls:"amber", title:"Oral Cavity Screening", desc:"Capture and upload oral cavity images for tele-specialist review." },
+  ];
+  const p = activePatient();
+  return `
+  ${topBar("Perform Screening")}
+  <div class="body">
+    <h4 class="q">Which screening would you like to start for ${p.name}?</h4>
+
+    ${opts.map(o=>`
+      <div class="option-card" onclick="toast('${o.title} module is outside this prototype\\'s scope')">
+        <div class="icon-badge ${o.cls}">${o.icon}</div>
+        <div class="txt">
+          <div class="row"><strong>${o.title}</strong><span class="info-dot">ⓘ</span></div>
+          <p>${o.desc}</p>
+        </div>
+      </div>`).join("")}
+
+    <div class="note-box">${state.regMethod === "none"
+      ? `ⓘ This patient has no ABHA linked yet — screening results will be saved to their TANUH record (${p.tanuhId}) only.`
+      : `ⓘ Patient is ABHA-linked (${p.tanuhId}) — screening results will be saved against this ABHA record automatically.`}</div>
+  </div>
+  `;
+}
+
+function screenLinkSearch(){
+  const typeMeta = {
+    abhaAddress: { label:"ABHA Address", placeholder:"e.g. ramesh.kumar@abdm" },
+    abhaNumber:  { label:"ABHA Number",  placeholder:"14-digit ABHA number" },
+    mobile:      { label:"Mobile Number", placeholder:"10-digit mobile number" },
+    aadhaar:     { label:"Aadhaar Number", placeholder:"Enter 12 digit Aadhaar number" },
+  };
+  const isAadhaar = state.linkSearchType === "aadhaar";
+  const digits = state.linkSearchValue.replace(/\D/g,"");
+
+  const valid = isAadhaar
+    ? (digits.length===12 && state.linkAadhaarConsents.every(Boolean))
+    : state.linkSearchValue.trim().length >= 3;
+
+  return `
+  ${topBar("Link ABHA Number/Address")}
+  <div class="body">
+    <h4 class="q">Search for the patient's existing ABHA record</h4>
+
+    <label class="field-label">Search by</label>
+    <div class="chip-row">
+      ${Object.entries(typeMeta).map(([key,m])=>`
+        <div class="chip ${state.linkSearchType===key?'active':''}" data-type="${key}">${m.label}</div>
+      `).join("")}
+    </div>
+
+    <label class="field-label">${typeMeta[state.linkSearchType].label}</label>
+    <div class="field-wrap">
+      <input class="field" id="linkSearchInput" ${isAadhaar? 'inputmode="numeric" maxlength="14"' : ''} placeholder="${typeMeta[state.linkSearchType].placeholder}" value="${state.linkSearchValue}">
+      ${isAadhaar ? '<span class="emoji-suffix">🪪</span>' : ''}
+    </div>
+
+    ${isAadhaar ? `
+      <fieldset class="consent">
+        <legend>Consent and Terms</legend>
+        <div class="chk-row">
+          <input type="checkbox" id="lc0" ${state.linkAadhaarConsents[0]?"checked":""}>
+          <label for="lc0">I provide consent for using my Aadhaar details to search for an existing ABHA record <a href="javascript:void(0)" onclick="event.preventDefault(); toast('Full terms text goes here')">(Read more)</a></label>
+        </div>
+        <div class="chk-row">
+          <input type="checkbox" id="lc1" ${state.linkAadhaarConsents[1]?"checked":""}>
+          <label for="lc1">I agree to the <a href="javascript:void(0)" onclick="event.preventDefault()">Terms and Conditions</a> <a href="javascript:void(0)" onclick="event.preventDefault(); toast('Full terms text goes here')">(Read more)</a></label>
+        </div>
+      </fieldset>
+      <button class="btn" id="linkSearchBtn" ${valid?"":"disabled"}>Send OTP</button>
+    ` : `
+      <div class="note-box">ⓘ An OTP verification on the patient's ABHA-linked mobile will be required before the record can be linked to TANUH.</div>
+      <button class="btn" id="linkSearchBtn" ${valid?"":"disabled"}>🔍 Search ABHA Records</button>
+    `}
+  </div>
+  `;
+}
+
+function screenLinkVerify(){
+  const typeMeta = {
+    abhaAddress: "ABHA Address", abhaNumber: "ABHA Number", mobile: "Mobile Number",
+  };
+  return `
+  ${topBar("Verify ABHA Number")}
+  <div class="body">
+    <p style="font-size:12.5px;color:var(--grey);margin:0 0 18px;">We found a matching ABHA record for the ${typeMeta[state.linkSearchType] || "search value"} entered.</p>
+
+    <div class="readonly-row"><div class="lbl">ABHA Number</div><div class="val">23-4567-8901-2345</div></div>
+    <div class="readonly-row"><div class="lbl">ABHA Address</div><div class="val">ramesh.kumar@abdm</div></div>
+    <div class="readonly-row"><div class="lbl">Registered Mobile</div><div class="val">98XXXXX210</div></div>
+
+    <div class="note-box">ⓘ To confirm ownership, an OTP will be sent to the Aadhaar-linked mobile number registered against this ABHA.</div>
+
+    <button class="btn" id="linkVerifyBtn">Send OTP</button>
+  </div>
+  `;
+}
+
+function screenLinkOtp(){
+  const filled = state.linkOtp.filter(d=>d!=="").length;
+  const canVerify = filled === 6;
+  return `
+  ${topBar("Verify OTP")}
+  <div class="body">
+    <div class="otp-icon">💬</div>
+    <div class="otp-copy">Enter the 6-digit OTP sent to<br>the mobile number linked to<br>this Aadhaar number.</div>
+    <div class="otp-boxes" id="linkOtpBoxes">
+      ${state.linkOtp.map((d,i)=>`<input maxlength="1" inputmode="numeric" data-idx="${i}" value="${d}">`).join("")}
+    </div>
+    <div class="otp-meta">
+      <a href="javascript:void(0)" id="resendLinkOtp">Resend OTP (<span id="resendTimerLink">60</span>s)</a>
+      <div>Resend allowed for 2 attempts</div>
+    </div>
+    <button class="btn" id="linkOtpVerifyBtn" ${canVerify? "" : "disabled"}>Verify OTP</button>
+  </div>
+  `;
+}
+
+function screenLinkResult(){
+  return `
+  ${topBar("Patient Record Found")}
+  <div class="body">
+    <p style="font-size:12.5px;color:var(--grey);margin:0 0 16px;">1 matching record found on ABDM. Please verify it belongs to the patient in front of you.</p>
+
+    <div class="abha-card" style="margin-bottom:20px;">
+      <div style="display:flex; gap:12px; align-items:center; margin-bottom:16px;">
+        <div class="avatar" style="width:44px;height:44px;font-size:19px;">🙂</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--ink);">Ramesh Kumar</div>
+          <div style="font-size:12px;color:var(--grey);">Male · 12 Mar 1984 (41 years)</div>
+        </div>
+      </div>
+      <div class="kv-row"><div class="lbl">ABHA Number</div><div class="val">23-4567-8901-2345</div></div>
+      <div class="kv-row"><div class="lbl">ABHA Address</div><div class="val">ramesh.kumar@abdm</div></div>
+      <div class="kv-row"><div class="lbl">Mobile Number</div><div class="val">98XXXXX210</div></div>
+      <div class="kv-row" style="border-bottom:none;"><div class="lbl">Address</div><div class="val">#12, 1st Main Road, HSR Layout, Bangalore</div></div>
+    </div>
+
+    <div class="note-box">ⓘ Confirm the name, age and mobile number with the patient before linking — linking the wrong record mixes up health histories.</div>
+
+    <div class="actions-stack">
+      <button class="btn" onclick="go('linkReview')">✔ Yes, this is the patient</button>
+      <button class="btn ghost" style="color:var(--danger);border-color:#f0d3ce;" onclick="state.linkNotSure=true; go('ambiguity')">✕ Not sure / doesn't match</button>
+    </div>
+  </div>
+  `;
+}
+
+function screenLinkReview(){
+  return `
+  ${topBar("Review ABHA Record")}
+  <div class="body">
+    <p style="font-size:12.5px;color:var(--grey);margin:0 0 18px;">Verify the details fetched from the ABDM record</p>
+
+    <div class="readonly-row"><div class="lbl">Full Name</div><div class="val">Ramesh Kumar</div></div>
+    <div class="readonly-row"><div class="lbl">Date of Birth</div><div class="val">12 Mar 1984 <span>📅</span></div></div>
+    <div class="readonly-row"><div class="lbl">Gender</div><div class="val">Male</div></div>
+    <div class="readonly-row"><div class="lbl">ABHA Number</div><div class="val">23-4567-8901-2345</div></div>
+    <div class="readonly-row"><div class="lbl">ABHA Address</div><div class="val">ramesh.kumar@abdm</div></div>
+    <div class="readonly-row"><div class="lbl">Address</div><div class="val" style="white-space:pre-line;">${state.address}</div></div>
+
+    <div class="note-box">ⓘ These details are fetched from the patient's ABDM record and will be linked to TANUH as-is.</div>
+
+    <div class="btn-row">
+      <button class="btn ghost" onclick="back()">Back</button>
+      <button class="btn" onclick="go('success')">Confirm &amp; Link Patient</button>
+    </div>
+  </div>
+  `;
+}
+
+function screenAmbiguity(){
+  return `
+  ${topBar("Confirm Before Proceeding")}
+  <div class="body">
+    <div class="center-col" style="padding-top:10px;">
+      <div class="check-circle" style="background:#fbe9d6;">
+        <div class="inner" style="background:#c07a1f;">!</div>
+      </div>
+      <h4 style="max-width:280px;">We couldn't confirm this is the right patient</h4>
+      <p style="font-size:13px;color:var(--grey);line-height:1.6;max-width:280px;margin:0 0 26px;">
+        For patient safety, don't link an ABHA record unless you're sure it matches. You can search again with different details, or continue registering the patient without ABHA for now — it can be linked later.
+      </p>
+      <div class="actions-stack">
+        <button class="btn outline" onclick="state.linkSearchValue=''; state.linkAadhaarConsents=[false,false]; state.linkOtp=['','','','','','']; go('linkSearch')">🔍 Search Again</button>
+        <button class="btn" onclick="state.regMethod='none'; go('noAbhaForm')">Register without ABHA instead</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function screenNoAbhaForm(){
+  const f = state.noAbhaForm;
+  const mobileOk = /^\d{10}$/.test(f.mobile);
+  const canSubmit = f.name.trim().length>1 && f.gender && mobileOk;
+  return `
+  ${topBar("Register Without ABHA")}
+  <div class="body">
+    ${state.linkNotSure ? `<div class="note-box">ⓘ Continuing here from an unconfirmed ABHA search. The patient can be linked to ABHA later once verified.</div>` : ""}
+
+    <label class="field-label">Full Name</label>
+    <div class="field-wrap"><input class="field" id="naName" placeholder="Patient's full name" value="${f.name}"></div>
+
+    <label class="field-label">Date of Birth</label>
+    <div class="field-wrap"><input class="field" id="naDob" type="date" value="${f.dob}"></div>
+
+    <label class="field-label">Gender</label>
+    <div class="chip-row" id="naGenderChips">
+      ${["Male","Female","Other"].map(g=>`<div class="chip ${f.gender===g?'active':''}" data-gender="${g}">${g}</div>`).join("")}
+    </div>
+
+    <label class="field-label" style="margin-top:16px;">Mobile Number</label>
+    <div class="field-wrap"><input class="field" id="naMobile" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" value="${f.mobile}"></div>
+
+    <label class="field-label">Address</label>
+    <div class="field-wrap"><input class="field" id="naAddress" placeholder="House no., street, city" value="${f.address}"></div>
+
+    <div class="note-box">ⓘ Patient is registered to TANUH without ABHA. You can create or link an ABHA anytime later from their profile.</div>
+
+    <button class="btn" id="naSubmitBtn" ${canSubmit?"":"disabled"}>Register Patient</button>
+  </div>
+  `;
+}
+
+/* ---- Existing patient: search + link ABHA ---- */
+function screenPatientRecord(){
+  const q = state.patientSearchValue.trim();
+  return `
+  ${topBar("Patient Record")}
+  <div class="body">
+    ${q ? `<p style="font-size:12.5px;color:var(--grey);margin:0 0 16px;">Showing best match for “${q}”.</p>` : ""}
+
+    <div class="profile-head">
+      <div class="avatar">🙂</div>
+      <div>
+        <h4>Sunita Devi</h4>
+        <div class="sub">TANUH ID: TNU-000876</div>
+        <span class="pill" style="background:#f3e6d2;color:#8a6116;">● No ABHA Linked</span>
+      </div>
+    </div>
+
+    <div class="kv-row"><div class="lbl">Date of Birth</div><div class="val">05 Jul 1990 (35 years)</div></div>
+    <div class="kv-row"><div class="lbl">Gender</div><div class="val">Female</div></div>
+    <div class="kv-row"><div class="lbl">Mobile Number</div><div class="val">9123456780</div></div>
+    <div class="kv-row" style="border-bottom:none;"><div class="lbl">Address</div><div class="val">#48, 2nd Cross, Ashok Nagar, Mysuru - 570009</div></div>
+
+    <div class="note-box" style="margin-top:20px;">ⓘ This patient was registered without ABHA. Create one now using their Aadhaar to link it to this TANUH record.</div>
+
+    <button class="btn" onclick="state.regMethod='linkExisting'; go('existingAadhaar')">🪪 Create ABHA Number</button>
+  </div>
+  `;
+}
+
+function screenExistingAadhaar(){
+  const digits = state.existingAadhaar.replace(/\D/g,"");
+  const valid = digits.length===12 && state.existingConsents.every(Boolean);
+  return `
+  ${topBar("Create ABHA Number")}
+  <div class="body">
+    <p style="font-size:12.5px;color:var(--grey);margin:0 0 18px;">Linking ABHA for <b style="color:var(--ink)">Sunita Devi</b> (TNU-000876)</p>
+
+    <label class="field-label">Enter Aadhaar Number</label>
+    <div class="field-wrap">
+      <input class="field" id="existingAadhaarInput" maxlength="14" inputmode="numeric" placeholder="Enter 12 digit Aadhaar number" value="${state.existingAadhaar}">
+      <span class="emoji-suffix">🪪</span>
+    </div>
+
+    <fieldset class="consent">
+      <legend>Consent and Terms</legend>
+      <div class="chk-row">
+        <input type="checkbox" id="ec0" ${state.existingConsents[0]?"checked":""}>
+        <label for="ec0">I provide consent for using my Aadhaar details for ABHA creation <a href="javascript:void(0)" onclick="event.preventDefault(); toast('Full terms text goes here')">(Read more)</a></label>
+      </div>
+      <div class="chk-row">
+        <input type="checkbox" id="ec1" ${state.existingConsents[1]?"checked":""}>
+        <label for="ec1">I agree to the Terms and Conditions <a href="javascript:void(0)" onclick="event.preventDefault(); toast('Full terms text goes here')">(Read more)</a></label>
+      </div>
+    </fieldset>
+
+    <button class="btn" id="existingAadhaarBtn" ${valid?"":"disabled"}>Send OTP</button>
+  </div>
+  `;
+}
+
+function screenExistingOtp(){
+  const filled = state.existingOtp.filter(d=>d!=="").length;
+  const canVerify = filled === 6;
+  return `
+  ${topBar("Verify Aadhaar (OTP)")}
+  <div class="body">
+    <div class="otp-icon">💬</div>
+    <div class="otp-copy">Enter the 6-digit OTP sent to<br>the mobile number linked to<br>this Aadhaar number.</div>
+    <div class="otp-boxes" id="existingOtpBoxes">
+      ${state.existingOtp.map((d,i)=>`<input maxlength="1" inputmode="numeric" data-idx="${i}" value="${d}">`).join("")}
+    </div>
+    <div class="otp-meta">
+      <a href="javascript:void(0)" id="resendExistingOtp">Resend OTP (<span id="resendTimerExisting">60</span>s)</a>
+      <div>Resend allowed for 2 attempts</div>
+    </div>
+    <button class="btn" id="existingOtpVerifyBtn" ${canVerify? "" : "disabled"}>Verify OTP</button>
+  </div>
+  `;
+}
+
+function screenExistingFetch(){
+  return `
+  ${topBar("Fetch Record from Aadhaar")}
+  <div class="body">
+    <p style="font-size:12.5px;color:var(--grey);margin:0 0 18px;">Details fetched from Aadhaar — verify before linking to Sunita Devi's TANUH record.</p>
+
+    <div class="readonly-row"><div class="lbl">Full Name</div><div class="val">Sunita Devi</div></div>
+    <div class="readonly-row"><div class="lbl">Date of Birth</div><div class="val">05 Jul 1990 <span>📅</span></div></div>
+    <div class="readonly-row"><div class="lbl">Gender</div><div class="val">Female</div></div>
+    <div class="readonly-row"><div class="lbl">Address</div><div class="val" style="white-space:pre-line;">#48, 2nd Cross, Ashok Nagar,\nMysuru - 570009</div></div>
+    <div class="readonly-row"><div class="lbl">Newly Generated ABHA Number</div><div class="val">34-5678-9012-3456</div></div>
+    <div class="readonly-row"><div class="lbl">Newly Generated ABHA Address</div><div class="val">sunita.devi@abdm</div></div>
+
+    <div class="note-box">ⓘ These details match the existing TANUH record. Linking will attach this ABHA to Sunita Devi's profile (TNU-000876).</div>
+
+    <div class="btn-row">
+      <button class="btn ghost" onclick="back()">Back</button>
+      <button class="btn" onclick="go('success')">🔗 Link to Patient Record</button>
+    </div>
+  </div>
+  `;
+}
+
+function screenCard(){
+  const p = activePatient();
+  return `
+  ${topBar("ABHA Card")}
+  <div class="body">
+    <div class="abha-card">
+      <div class="brand">
+        <span class="mark">🇮🇳</span>
+        <div class="name">National Health<br>Authority<br><b style="color:var(--ink)">Ayushman Bharat Health Account (ABHA)</b></div>
+      </div>
+      <div class="name-lg">${p.name}</div>
+      <div class="kv"><div class="lbl">ABHA Number</div><div class="val">${p.abhaNumber}</div></div>
+      <div class="kv"><div class="lbl">ABHA Address</div><div class="val">${p.abhaAddress}</div></div>
+      <div class="qr-wrap">${qrSvg()}</div>
+      <div class="qr-cap">Scan this QR code to share your health records</div>
+    </div>
+    <div class="btn-row" style="margin-top:18px;">
+      <button class="btn outline" onclick="toast('Card downloaded ✓')">⬇ Download</button>
+      <button class="btn outline" onclick="toast('Share sheet opened')">⇧ Share</button>
+    </div>
+  </div>
+  `;
+}
+
+function qrSvg(){
+  // deterministic pseudo-QR pattern for visual purposes only
+  let seed = 42; const rnd = ()=>{ seed = (seed*9301+49297)%233280; return seed/233280; };
+  const n=11, cell=9; let rects="";
+  for(let y=0;y<n;y++){ for(let x=0;x<n;x++){
+    const isFinder = (x<3&&y<3)||(x>n-4&&y<3)||(x<3&&y>n-4);
+    const on = isFinder ? ((x%3!==1 || y%3!==1)) : rnd()>0.52;
+    if(on) rects += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="#1e3a4c"/>`;
+  }}
+  const size = n*cell;
+  return `<svg width="120" height="120" viewBox="0 0 ${size} ${size}" style="background:#fff;border-radius:8px;padding:4px;box-sizing:content-box;border:1px solid var(--line);">${rects}</svg>`;
+}
+
+function screenProfile(){
+  const noAbha = state.regMethod === "none";
+  const f = state.noAbhaForm;
+  const p = activePatient();
+  const name = noAbha && f.name ? f.name : p.name;
+  const gender = noAbha && f.gender ? f.gender : p.gender;
+  const mobile = noAbha && f.mobile ? f.mobile : p.mobile;
+  const address = noAbha && f.address ? f.address : p.address.replace(/\n/g, " ");
+  const dob = noAbha && f.dob ? f.dob : p.dobAge;
+
+  return `
+  ${topBar("Patient Profile")}
+  <div class="body">
+    <div class="profile-head">
+      <div class="avatar">🙂</div>
+      <div>
+        <h4>${name}</h4>
+        <div class="sub">TANUH ID: ${p.tanuhId}</div>
+        <span class="pill" style="${noAbha? 'background:#f3e6d2;color:#8a6116;' : ''}">● ${noAbha? "No ABHA Linked" : "ABHA Linked"}</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab ${state.profileTab==='demo'?'active':''}" data-tab="demo">Demographics</div>
+      <div class="tab ${state.profileTab==='abha'?'active':''}" data-tab="abha">ABHA Details</div>
+    </div>
+    ${state.profileTab==='demo' ? `
+      <div class="kv-row"><div class="lbl">Full Name</div><div class="val">${name}</div></div>
+      <div class="kv-row"><div class="lbl">Date of Birth</div><div class="val">${dob}</div></div>
+      <div class="kv-row"><div class="lbl">Gender</div><div class="val">${gender}</div></div>
+      <div class="kv-row"><div class="lbl">Address</div><div class="val">${address}</div></div>
+      <div class="kv-row" style="border-bottom:none;"><div class="lbl">Mobile Number</div><div class="val">${mobile}</div></div>
+    ` : noAbha ? `
+      <div class="note-box">ⓘ No ABHA number or address is linked to this patient yet.</div>
+      <button class="btn" style="margin-top:6px;" onclick="state.regMethod='create'; go('createAbha')">Create ABHA Number</button>
+      <button class="btn outline" style="margin-top:10px;" onclick="state.regMethod='link'; go('linkSearch')">Link Existing ABHA</button>
+    ` : `
+      <div class="kv-row"><div class="lbl">ABHA Number</div><div class="val">${p.abhaNumber}</div></div>
+      <div class="kv-row" style="border-bottom:none;"><div class="lbl">ABHA Address</div><div class="val">${p.abhaAddress}</div></div>
+      <button class="btn outline" style="margin-top:18px;" onclick="go('card')">View ABHA Card</button>
+    `}
+    <button class="btn" style="margin-top:22px;" onclick="toast('Edit mode is not part of this prototype')">Edit Details</button>
+  </div>
+  `;
+}
+
+/* ---------------- main render ---------------- */
+function render(){
+  renderStepList();
+  const root = document.getElementById("screenRoot");
+  let html;
+  switch(current){
+    case "dashboard": html = screenDashboard(); break;
+    case "registerHome": html = screenRegisterHome(); break;
+    case "register": html = screenRegister(); break;
+    case "createAbha": html = screenCreateAbha(); break;
+    case "otp": html = screenOtp(); break;
+    case "address": html = screenAddress(); break;
+    case "review": html = screenReview(); break;
+    case "success": html = screenSuccess(); break;
+    case "screening": html = screenScreening(); break;
+    case "linkSearch": html = screenLinkSearch(); break;
+    case "linkVerify": html = screenLinkVerify(); break;
+    case "linkOtp": html = screenLinkOtp(); break;
+    case "linkResult": html = screenLinkResult(); break;
+    case "linkReview": html = screenLinkReview(); break;
+    case "ambiguity": html = screenAmbiguity(); break;
+    case "noAbhaForm": html = screenNoAbhaForm(); break;
+    case "patientRecord": html = screenPatientRecord(); break;
+    case "existingAadhaar": html = screenExistingAadhaar(); break;
+    case "existingOtp": html = screenExistingOtp(); break;
+    case "existingFetch": html = screenExistingFetch(); break;
+    case "card": html = screenCard(); break;
+    case "profile": html = screenProfile(); break;
+    default: html = screenRegister();
+  }
+  root.innerHTML = html + `<div class="toast" id="toastEl"></div>`;
+  wireUp();
+}
+
+function wireUp(){
+  if(current === "createAbha"){
+    const inp = document.getElementById("aadhaarInput");
+    inp.addEventListener("input", (e)=>{
+      let digits = e.target.value.replace(/\D/g,"").slice(0,12);
+      let formatted = digits.replace(/(\d{4})(?=\d)/g,"$1 ");
+      state.aadhaar = digits;
+      e.target.value = formatted;
+      syncContinueBtn();
+    });
+    document.querySelectorAll('.chk-row input[type=checkbox]').forEach((c,i)=>{
+      c.addEventListener("change", ()=>{ state.consents[i]=c.checked; syncContinueBtn(); });
+    });
+    document.getElementById("continueBtn").addEventListener("click", ()=>{
+      if(state.aadhaar.length===12 && state.consents.every(Boolean)) go('otp');
+    });
+    function syncContinueBtn(){
+      const ok = state.aadhaar.length===12 && state.consents.every(Boolean);
+      document.getElementById("continueBtn").disabled = !ok;
+    }
+  }
+
+  if(current === "otp"){
+    const boxes = document.querySelectorAll('.otp-boxes input');
+    boxes.forEach((b,i)=>{
+      b.addEventListener("input", (e)=>{
+        const v = e.target.value.replace(/\D/g,"").slice(-1);
+        state.otp[i]=v; e.target.value=v;
+        if(v && boxes[i+1]) boxes[i+1].focus();
+        syncVerifyBtn();
+      });
+      b.addEventListener("keydown",(e)=>{
+        if(e.key==="Backspace" && !e.target.value && boxes[i-1]){ boxes[i-1].focus(); }
+      });
+    });
+    function syncVerifyBtn(){
+      document.getElementById("verifyBtn").disabled = state.otp.filter(d=>d!=="").length !== 6;
+    }
+    document.getElementById("verifyBtn").addEventListener("click", ()=>{
+      if(state.otp.filter(d=>d!=="").length===6) go('review');
+    });
+    // countdown
+    let seconds = 60;
+    const timerEl = document.getElementById("resendTimer");
+    const linkEl = document.getElementById("resendLink");
+    linkEl.classList.add("resend-dim");
+    clearInterval(window.__otpTimer);
+    window.__otpTimer = setInterval(()=>{
+      seconds--;
+      if(timerEl) timerEl.textContent = seconds;
+      if(seconds<=0){
+        clearInterval(window.__otpTimer);
+        if(linkEl){ linkEl.textContent = "Resend OTP"; linkEl.classList.remove("resend-dim"); linkEl.onclick=()=>{ toast("OTP resent ✓"); }; }
+      }
+    },1000);
+  }
+
+  if(current === "address"){
+    const inp = document.getElementById("addressInput");
+    inp.addEventListener("input", (e)=>{
+      state.abhaAddress = e.target.value;
+      const v = state.abhaAddress.trim();
+      document.getElementById("addrContinueBtn").disabled = !/^[a-z0-9._]{3,32}$/.test(v);
+    });
+    document.getElementById("addrContinueBtn").addEventListener("click", ()=>{
+      const v = state.abhaAddress.trim();
+      if(/^[a-z0-9._]{3,32}$/.test(v)) go('success');
+    });
+  }
+
+  if(current === "review" && state.editingAddress){
+    const ta = document.getElementById("addressEdit");
+    ta?.addEventListener("blur", ()=>{ state.address = ta.value; state.editingAddress=false; render(); });
+  }
+
+  if(current === "profile"){
+    document.querySelectorAll('.tab').forEach(t=>{
+      t.addEventListener("click", ()=>{ state.profileTab = t.dataset.tab; render(); });
+    });
+  }
+
+  if(current === "linkSearch"){
+    const isAadhaar = state.linkSearchType === "aadhaar";
+    document.querySelectorAll('.chip[data-type]').forEach(c=>{
+      c.addEventListener("click", ()=>{
+        state.linkSearchType = c.dataset.type; state.linkSearchValue="";
+        state.linkAadhaarConsents=[false,false]; render();
+      });
+    });
+    const inp = document.getElementById("linkSearchInput");
+    function syncLinkSearchBtn(){
+      const digits = state.linkSearchValue.replace(/\D/g,"");
+      const ok = isAadhaar
+        ? (digits.length===12 && state.linkAadhaarConsents.every(Boolean))
+        : state.linkSearchValue.trim().length >= 3;
+      document.getElementById("linkSearchBtn").disabled = !ok;
+    }
+    inp.addEventListener("input", (e)=>{
+      if(isAadhaar){
+        let digits = e.target.value.replace(/\D/g,"").slice(0,12);
+        state.linkSearchValue = digits;
+        e.target.value = digits.replace(/(\d{4})(?=\d)/g,"$1 ");
+      } else {
+        state.linkSearchValue = e.target.value;
+      }
+      syncLinkSearchBtn();
+    });
+    if(isAadhaar){
+      document.querySelectorAll('#lc0, #lc1').forEach((c,i)=>{
+        c.addEventListener("change", ()=>{ state.linkAadhaarConsents[i]=c.checked; syncLinkSearchBtn(); });
+      });
+    }
+    document.getElementById("linkSearchBtn").addEventListener("click", ()=>{
+      const digits = state.linkSearchValue.replace(/\D/g,"");
+      if(isAadhaar){
+        if(digits.length===12 && state.linkAadhaarConsents.every(Boolean)) go('linkOtp');
+      } else {
+        if(state.linkSearchValue.trim().length >= 3) go('linkVerify');
+      }
+    });
+  }
+
+  if(current === "linkVerify"){
+    document.getElementById("linkVerifyBtn").addEventListener("click", ()=> go('linkOtp'));
+  }
+
+  if(current === "linkOtp"){
+    const boxes = document.querySelectorAll('#linkOtpBoxes input');
+    boxes.forEach((b,i)=>{
+      b.addEventListener("input", (e)=>{
+        const v = e.target.value.replace(/\D/g,"").slice(-1);
+        state.linkOtp[i]=v; e.target.value=v;
+        if(v && boxes[i+1]) boxes[i+1].focus();
+        syncLinkVerifyBtn();
+      });
+      b.addEventListener("keydown",(e)=>{
+        if(e.key==="Backspace" && !e.target.value && boxes[i-1]){ boxes[i-1].focus(); }
+      });
+    });
+    function syncLinkVerifyBtn(){
+      document.getElementById("linkOtpVerifyBtn").disabled = state.linkOtp.filter(d=>d!=="").length !== 6;
+    }
+    document.getElementById("linkOtpVerifyBtn").addEventListener("click", ()=>{
+      if(state.linkOtp.filter(d=>d!=="").length===6) go('linkResult');
+    });
+    let seconds = 60;
+    const timerEl = document.getElementById("resendTimerLink");
+    const linkEl = document.getElementById("resendLinkOtp");
+    linkEl.classList.add("resend-dim");
+    clearInterval(window.__linkOtpTimer);
+    window.__linkOtpTimer = setInterval(()=>{
+      seconds--;
+      if(timerEl) timerEl.textContent = seconds;
+      if(seconds<=0){
+        clearInterval(window.__linkOtpTimer);
+        if(linkEl){ linkEl.textContent = "Resend OTP"; linkEl.classList.remove("resend-dim"); linkEl.onclick=()=>{ toast("OTP resent ✓"); }; }
+      }
+    },1000);
+  }
+
+  if(current === "noAbhaForm"){
+    const f = state.noAbhaForm;
+    document.getElementById("naName").addEventListener("input", e=>{ f.name=e.target.value; syncNaBtn(); });
+    document.getElementById("naDob").addEventListener("input", e=>{ f.dob=e.target.value; });
+    document.getElementById("naMobile").addEventListener("input", e=>{
+      f.mobile = e.target.value.replace(/\D/g,"").slice(0,10); e.target.value=f.mobile; syncNaBtn();
+    });
+    document.getElementById("naAddress").addEventListener("input", e=>{ f.address=e.target.value; });
+    document.querySelectorAll('.chip[data-gender]').forEach(c=>{
+      c.addEventListener("click", ()=>{ f.gender=c.dataset.gender; render(); });
+    });
+    document.getElementById("naSubmitBtn").addEventListener("click", ()=>{
+      if(f.name.trim().length>1 && f.gender && /^\d{10}$/.test(f.mobile)) go('success');
+    });
+    function syncNaBtn(){
+      const ok = f.name.trim().length>1 && f.gender && /^\d{10}$/.test(f.mobile);
+      document.getElementById("naSubmitBtn").disabled = !ok;
+    }
+  }
+
+  if(current === "registerHome"){
+    const inp = document.getElementById("patientSearchInput");
+    inp.addEventListener("input", (e)=>{
+      state.patientSearchValue = e.target.value;
+      document.getElementById("patientSearchBtn").disabled = state.patientSearchValue.trim().length < 2;
+    });
+    document.getElementById("patientSearchBtn").addEventListener("click", ()=>{
+      if(state.patientSearchValue.trim().length >= 2) go('patientRecord');
+    });
+  }
+
+  if(current === "existingAadhaar"){
+    const inp = document.getElementById("existingAadhaarInput");
+    function syncExistingBtn(){
+      const digits = state.existingAadhaar.replace(/\D/g,"");
+      document.getElementById("existingAadhaarBtn").disabled = !(digits.length===12 && state.existingConsents.every(Boolean));
+    }
+    inp.addEventListener("input",(e)=>{
+      let digits = e.target.value.replace(/\D/g,"").slice(0,12);
+      state.existingAadhaar = digits;
+      e.target.value = digits.replace(/(\d{4})(?=\d)/g,"$1 ");
+      syncExistingBtn();
+    });
+    document.querySelectorAll('#ec0, #ec1').forEach((c,i)=>{
+      c.addEventListener("change", ()=>{ state.existingConsents[i]=c.checked; syncExistingBtn(); });
+    });
+    document.getElementById("existingAadhaarBtn").addEventListener("click", ()=>{
+      const digits = state.existingAadhaar.replace(/\D/g,"");
+      if(digits.length===12 && state.existingConsents.every(Boolean)) go('existingOtp');
+    });
+  }
+
+  if(current === "existingOtp"){
+    const boxes = document.querySelectorAll('#existingOtpBoxes input');
+    boxes.forEach((b,i)=>{
+      b.addEventListener("input", (e)=>{
+        const v = e.target.value.replace(/\D/g,"").slice(-1);
+        state.existingOtp[i]=v; e.target.value=v;
+        if(v && boxes[i+1]) boxes[i+1].focus();
+        syncExistingOtpBtn();
+      });
+      b.addEventListener("keydown",(e)=>{
+        if(e.key==="Backspace" && !e.target.value && boxes[i-1]){ boxes[i-1].focus(); }
+      });
+    });
+    function syncExistingOtpBtn(){
+      document.getElementById("existingOtpVerifyBtn").disabled = state.existingOtp.filter(d=>d!=="").length !== 6;
+    }
+    document.getElementById("existingOtpVerifyBtn").addEventListener("click", ()=>{
+      if(state.existingOtp.filter(d=>d!=="").length===6) go('existingFetch');
+    });
+    let seconds = 60;
+    const timerEl = document.getElementById("resendTimerExisting");
+    const linkEl = document.getElementById("resendExistingOtp");
+    linkEl.classList.add("resend-dim");
+    clearInterval(window.__existingOtpTimer);
+    window.__existingOtpTimer = setInterval(()=>{
+      seconds--;
+      if(timerEl) timerEl.textContent = seconds;
+      if(seconds<=0){
+        clearInterval(window.__existingOtpTimer);
+        if(linkEl){ linkEl.textContent = "Resend OTP"; linkEl.classList.remove("resend-dim"); linkEl.onclick=()=>{ toast("OTP resent ✓"); }; }
+      }
+    },1000);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
